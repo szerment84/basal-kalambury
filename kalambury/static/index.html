@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>basal kalambury</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div>
+      <h1>basal <span>kalambury</span></h1>
+      <p class="lead">Rysuj, a basal zgaduje spośród <b>255 haseł naraz</b>: jeden przebieg modelu, rozkład
+        prawdopodobieństwa zamiast tekstu, <b>0 wygenerowanych tokenów</b>.</p>
+    </div>
+    <div id="model" class="badge">łączę z basal-serve…</div>
+  </header>
+
+  <main>
+    <section class="card board">
+      <div class="modes" role="tablist">
+        <button data-mode="game" class="on">Gra</button>
+        <button data-mode="free">Wolne rysowanie</button>
+      </div>
+      <div id="task" class="task">
+        <div class="prompt">Narysuj: <b id="target">…</b></div>
+        <div class="score" id="score"></div>
+      </div>
+      <div class="timer" id="timerbar"><i id="timer"></i></div>
+      <div class="paper"><canvas id="canvas"></canvas><div id="banner" class="banner" hidden></div></div>
+      <div class="tools">
+        <button id="undo" title="Z">↶ Cofnij</button>
+        <button id="clear" title="C">Wyczyść</button>
+        <button id="next" title="N">Nowe hasło</button>
+      </div>
+    </section>
+
+    <section class="card mind">
+      <div class="say"><span id="say">Zacznij rysować…</span><span id="busy" class="busy" hidden>basal patrzy…</span></div>
+      <div class="bars" id="bars"></div>
+      <div class="tline" id="tline"></div>
+      <div class="stats" id="stats"></div>
+      <div class="eye">
+        <img id="seen" alt="">
+        <p>Tak rysunek trafia do modelu: kadrowany do kresek, 384×384 px, ten sam renderer co w benchmarku.</p>
+      </div>
+    </section>
+  </main>
+
+  <details class="card words">
+    <summary>Lista 255 haseł</summary>
+    <p id="wordlist"></p>
+  </details>
+
+  <footer>
+    Rysunki do benchmarku: Google <a href="https://quickdraw.withgoogle.com/data">Quick, Draw!</a> (CC BY 4.0) ·
+    model i silnik: <a href="https://github.com/rkinas/basal">basal</a> (Apache-2.0) ·
+    skróty: <kbd>Z</kbd> cofnij, <kbd>C</kbd> wyczyść, <kbd>N</kbd> nowe hasło
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>
