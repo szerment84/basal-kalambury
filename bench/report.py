@@ -49,7 +49,7 @@ def summarize(rows):
     conf = Counter((r["word"], r["choice"]) for r in rows if not r["ok"])
     lat = sorted(r["wall_ms"] for r in rows)
     return {
-        "model": rows[0]["model"], "n": n, "options": 255, "chance": 1 / 255,
+        "model": rows[0]["model"], "tag": rows[0]["tag"], "n": n, "options": 255, "chance": 1 / 255,
         "top1": k1 / n, "top1_ci95": wilson(k1, n),
         "top5": sum(r["rank_true"] <= 5 for r in rows) / n,
         "ece": sum(x["n"] * abs(x["acc"] - x["conf"]) for x in b) / n,
@@ -79,7 +79,7 @@ def scorecard(s, path):
     plt.rcParams.update({"font.family": "DejaVu Sans", "text.color": INK, "axes.labelcolor": INK2,
                          "xtick.color": MUTED, "ytick.color": MUTED})
     fig = plt.figure(figsize=(16, 9), dpi=100, facecolor=SURFACE)
-    fig.text(0.05, 0.9, "basal kalambury · Quick, Draw! · 255 haseł w jednym pytaniu", fontsize=20, color=INK2)
+    fig.text(0.05, 0.93, f"{s['model']} · Quick, Draw! · 255 haseł w jednym pytaniu", fontsize=20, color=INK2)
     fig.text(0.05, 0.62, pct(s["top1"]), fontsize=110, weight="bold", color=INK)
     lo, hi = s["top1_ci95"]
     fig.text(0.05, 0.555, f"trafień za pierwszym razem (95% CI {pct(lo)}–{pct(hi)})", fontsize=17, color=INK2)
@@ -89,22 +89,23 @@ def scorecard(s, path):
         x, y = 0.05 + (i % 2) * 0.2, 0.36 - (i // 2) * 0.16
         fig.text(x, y, v, fontsize=40, weight="bold", color=INK)
         fig.text(x, y - 0.045, lab, fontsize=15, color=MUTED)
-    fig.text(0.05, 0.06, f"{s['model']} · basal 2.1 · każdy rysunek = 1 przebieg modelu, {s['median_input_tokens']} "
+    fig.text(0.05, 0.06, f"basal 2.1 · {s['tag']} · każdy rysunek = 1 przebieg modelu, {s['median_input_tokens']} "
              f"{plural(s['median_input_tokens'], 'token', 'tokeny', 'tokenów')} "
              f"wejścia, 0 wyjścia", fontsize=13, color=MUTED)
 
-    ax = fig.add_axes([0.53, 0.17, 0.42, 0.66], facecolor=SURFACE)
+    ax = fig.add_axes([0.53, 0.14, 0.42, 0.62], facecolor=SURFACE)
     ax.plot([0, 1], [0, 1], color=AXIS, lw=1, zorder=1)
-    ax.text(0.97, 0.9, "idealna kalibracja", color=MUTED, fontsize=12, ha="right", rotation=36,
-            transform=ax.transAxes)
-    bx, by = [b["conf"] for b in s["bins"]], [b["acc"] for b in s["bins"]]
+    ax.text(0.36, 0.3, "idealna kalibracja", color=MUTED, fontsize=12, ha="center", va="top", rotation=41,
+            rotation_mode="anchor", transform=ax.transAxes)
+    shown = [b for b in s["bins"] if b["n"] >= 10]  # pojedyncze rysunki dają przypadkowe skoki do 0% / 100%
+    bx, by = [b["conf"] for b in shown], [b["acc"] for b in shown]
     ax.plot(bx, by, color=BLUE, lw=2, solid_capstyle="round", zorder=2)
-    ax.scatter(bx, by, s=[30 + 0.35 * b["n"] for b in s["bins"]], color=BLUE, edgecolors=SURFACE, linewidths=2,
+    ax.scatter(bx, by, s=[24 + 0.5 * b["n"] for b in shown], color=BLUE, edgecolors=SURFACE, linewidths=2,
                zorder=3)
-    top = s["bins"][-1]
+    top = shown[-1]
     ax.annotate(f"pewność {pct(top['lo'])}+: trafia w {pct(top['acc'])}\n({top['n']} {plural(top['n'], 'rysunek', 'rysunki', 'rysunków')})",
-                (top["conf"], top["acc"]), xytext=(-20, -70), textcoords="offset points", ha="right", fontsize=13,
-                color=INK, arrowprops=dict(arrowstyle="-", color=MUTED, lw=1))
+                (top["conf"], top["acc"]), xytext=(0.98, 0.06), textcoords="axes fraction", ha="right", va="bottom",
+                fontsize=13, color=INK, arrowprops=dict(arrowstyle="-", color=MUTED, lw=1, shrinkB=6))
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.set_xticks([0, .25, .5, .75, 1], ["0%", "25%", "50%", "75%", "100%"])
@@ -118,10 +119,11 @@ def scorecard(s, path):
     ax.tick_params(length=0, labelsize=12)
     ax.set_xlabel("deklarowana pewność modelu", fontsize=14, labelpad=10)
     ax.set_ylabel("faktyczna trafność", fontsize=14, labelpad=10)
-    fig.text(0.53, 0.86, f"Czy wie, kiedy nie wie? Błąd kalibracji (ECE) {s['ece']:.3f}".replace(".", ","),
-             fontsize=17, color=INK)
-    fig.text(0.53, 0.83, "punkty: rysunki pogrupowane wg pewności (co 10 pp.), wielkość = liczba rysunków",
-             fontsize=12, color=MUTED)
+    fig.text(0.53, 0.86, "Deklarowana pewność a faktyczna trafność", fontsize=17, color=INK)
+    fig.text(0.53, 0.825, f"ECE {s['ece']:.3f} · nad przekątną model trafia częściej, niż deklaruje, pod nią rzadziej"
+             .replace(".", ",", 1), fontsize=12, color=MUTED)
+    fig.text(0.53, 0.797, "grupy co 10 pp. pewności (≥10 rysunków), wielkość punktu = liczba rysunków", fontsize=12,
+             color=MUTED)
     fig.savefig(path, facecolor=SURFACE)
     plt.close(fig)
 
@@ -143,8 +145,10 @@ def gallery(rows, drawings, path, n=12, seed=7):
         im.paste(render(drawings[r["key_id"]], cell), (x, y))
         ok = r["ok"]
         d.rectangle((x, y + cell, x + cell, y + cell + cap), fill="#232321")
-        d.text((x + 12, y + cell + 10), ("✓ " if ok else "✗ ") + f"{PL[r['choice']]} {pct(r['confidence'])}",
-               font=font, fill=GOOD if ok else BAD)
+        label, f = ("✓ " if ok else "✗ ") + f"{PL[r['choice']]} {pct(r['confidence'])}", font
+        while d.textlength(label, font=f) > cell - 24:  # długie hasło: mniejsza czcionka zamiast wyjścia poza kafelek
+            f = ImageFont.truetype(fm.findfont("DejaVu Sans"), f.size - 1)
+        d.text((x + 12, y + cell + 10), label, font=f, fill=GOOD if ok else BAD)
         d.text((x + 12, y + cell + 42), "trafione" if ok else f"prawda: {PL[r['word']]}", font=small, fill=MUTED)
     im.save(path)
 
@@ -157,9 +161,11 @@ def markdown(s):
         f"- trafność top-1: **{pct(s['top1'], 1)}** (95% CI {pct(s['top1_ci95'][0], 1)}–{pct(s['top1_ci95'][1], 1)}); "
         f"losowe zgadywanie: {pct(s['chance'], 1)}",
         f"- hasło w top-5: **{pct(s['top5'], 1)}**",
-        f"- błąd kalibracji ECE: **{s['ece']:.3f}**; średnia deklarowana pewność {pct(s['mean_confidence'], 1)}",
-        f"- wygenerowane tokeny: **{s['output_tokens_total']}**; mediana wejścia {s['median_input_tokens']} tokenów, "
-        f"mediana czasu {s['median_latency_s']:.1f} s",
+        f"- błąd kalibracji ECE: **{s['ece']:.3f}**; średnia deklarowana pewność ".replace(".", ",") +
+        pct(s["mean_confidence"], 1),
+        f"- wygenerowane tokeny: **{s['output_tokens_total']}**; mediana wejścia {s['median_input_tokens']} "
+        f"{plural(s['median_input_tokens'], 'token', 'tokeny', 'tokenów')}, mediana czasu "
+        f"{s['median_latency_s']:.1f} s ({s['tag']})".replace(".", ",", 1),
         "", "| pewność modelu | odsetek rysunków | trafność w tej grupie |", "|---|---|---|",
     ]
     for t, v in sel.items():

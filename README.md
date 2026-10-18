@@ -5,11 +5,36 @@ w **jednym przebiegu** modelu i **bez generowania ani jednego tokena**. Wszystko
 
 ![basal kalambury: rysunki odtwarzane kreska po kresce i odpowiedzi modelu](results/kalambury.gif)
 
-Pełne wideo: [results/kalambury.mp4](results/kalambury.mp4)
+Pełne wideo: [results/kalambury.mp4](results/kalambury.mp4) · wyniki: [results/RESULTS.md](results/RESULTS.md)
 
 ## Wynik
 
-Benchmark na 1020 rysunkach z Google Quick, Draw! jeszcze trwa. Wyniki pojawią się tutaj.
+![Wynik: 28% trafień za pierwszym razem spośród 255 haseł, kalibracja](results/scorecard.png)
+
+Test objął 1020 rysunków z Google Quick, Draw! (255 haseł × 4). Model oceniał każdy z nich spośród **wszystkich 255
+haseł naraz**, bez żadnego treningu na rysunkach:
+
+| basal-omni-1.0-mini | wynik |
+|---|---|
+| trafienie za pierwszym razem (top-1) | **28,0%** (95% CI 25,4–30,9%) |
+| hasło w pierwszej piątce (top-5) | **45,3%** |
+| losowe zgadywanie | 0,4% |
+| błąd kalibracji (ECE) | 0,059 |
+| wygenerowane tokeny | **0** |
+| mediana czasu na MacBooku Pro M1 Pro | 8,0 s |
+
+- Przy pewności ≥50% (19% rysunków) model trafia w 66,5%, a przy ≥80% (7% rysunków) w 75%.
+- Deklarowana pewność mija się z trafnością średnio o 6 pp. (ECE 0,059). Przy niskiej pewności model jest ostrożny:
+  w przedziale 10–20% trafia w 27%. W najwyższym przedziale jest zbyt pewny siebie: przy 90%+ trafia w 76%.
+- Pomyłki przy pewności 90%+ są „ludzkie”: papuga → ptak, stodoła → dom, lotniskowiec → samolot,
+  pocztówka → koperta, twarz → uśmiechnięta buźka.
+- 18 haseł model zgadł 4 razy na 4 (m.in. autobus, jabłko, kwiat, młotek, ośmiornica, samolot, truskawka), a 114
+  haseł ani razu.
+
+![12 losowych rysunków ze zbioru testowego i odpowiedź modelu](results/gallery.png)
+
+Wszystkie tabele są w [results/RESULTS.md](results/RESULTS.md), a surowe odpowiedzi modelu, z rozkładami
+prawdopodobieństwa, w `results/test.jsonl`.
 
 ## Jak to działa
 
@@ -100,6 +125,10 @@ model. Odpowiedzi są prawdziwe, tylko tempo jest przyspieszone.
 - Na M1 Pro jedno zgadywanie trwa kilka sekund. Prompt ma ~1870 tokenów, z czego ~1500 to lista 255 haseł.
   Na GPU NVIDIA to ułamki sekundy.
 - Hasła Quick, Draw! bywają dwuznaczne (kubek / kubeczek / filiżanka kawy, mysz, huśtawka / huśtawka wagowa).
+- **„Mysz” jako atraktor.** Stan zapytania mówi „szkic narysowany myszką”, a model wybrał „mysz” w 116 z 1020
+  rysunków (trafnie 4 razy), prawie zawsze przy niskiej pewności (mediana 5%). Usunięcie tej preferencji podniosłoby
+  top-1 najwyżej o 0,4 pp. (z 28,0% do 28,4%). Zostawiłem więc prompt bez zmian, żeby gra i benchmark używały tego
+  samego.
 
 ## Licencje i podziękowania
 
