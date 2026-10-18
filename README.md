@@ -20,7 +20,7 @@ results: [results/RESULTS_en.md](results/RESULTS_en.md)
 ![Result: 28% right on the first guess out of 255 words, with calibration](results/scorecard_en.png)
 
 The test covers 1020 Google Quick, Draw! drawings (255 words × 4). The model judged each of them against **all 255
-words at once**, with no training on drawings:
+words at once**, without any fine-tuning on drawings:
 
 | basal-omni-1.0-mini | result |
 |---|---|
@@ -95,7 +95,8 @@ confidence and the probabilities of all 255 words; `usage.output_tokens` is 0.
 1. The strokes become a 384×384 image cropped to the drawing ([kalambury/render.py](kalambury/render.py)). The same
    code serves the game, the benchmark and the videos, so the model always sees the same thing.
 2. `basal-serve` with a basal-omni model (Gemma 4 fine-tuned on decisions) reads the image with Gemma 4's vision
-   encoder. basal-omni was trained on text decisions only, so recognising sketches is pure zero-shot.
+   encoder. basal-omni was fine-tuned on text decisions only, so recognising sketches is zero-shot: no training on
+   this task (Gemma 4 itself was pretrained on images in general).
 3. The game asks the model after every stroke and shows the 10 most likely words live
    ([kalambury/static/app.js](kalambury/static/app.js)).
 

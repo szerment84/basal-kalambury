@@ -18,7 +18,7 @@ Pełne wideo: [results/kalambury.mp4](results/kalambury.mp4) · wyniki: [results
 ![Wynik: 28% trafień za pierwszym razem spośród 255 haseł, kalibracja](results/scorecard.png)
 
 Test objął 1020 rysunków z Google Quick, Draw! (255 haseł × 4). Model oceniał każdy z nich spośród **wszystkich 255
-haseł naraz**, bez żadnego treningu na rysunkach:
+haseł naraz**, bez żadnego dotrenowania na rysunkach:
 
 | basal-omni-1.0-mini | wynik |
 |---|---|
@@ -94,7 +94,8 @@ W odpowiedzi przychodzi wybrane hasło, pewność i prawdopodobieństwa wszystki
 1. Kreski zamieniają się w obraz 384×384 przycięty do rysunku ([kalambury/render.py](kalambury/render.py)). Ten sam
    kod obsługuje grę, benchmark i wideo, więc model zawsze widzi to samo.
 2. `basal-serve` z modelem basal-omni (Gemma 4 dotrenowana na decyzjach) czyta obraz enkoderem wizji Gemma 4.
-   basal-omni był trenowany wyłącznie na decyzjach tekstowych, więc rozpoznawanie szkiców to czysty zero-shot.
+   basal-omni był dotrenowany wyłącznie na decyzjach tekstowych, więc rozpoznawanie szkiców to zero-shot: bez
+   treningu na tym zadaniu (sama Gemma 4 była pretrenowana na obrazach ogólnie).
 3. Gra pyta model po każdej kresce i na żywo pokazuje 10 najbardziej prawdopodobnych haseł
    ([kalambury/static/app.js](kalambury/static/app.js)).
 
