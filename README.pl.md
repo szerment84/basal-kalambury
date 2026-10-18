@@ -134,8 +134,8 @@ zmianą: ta tabela zostaje w RAM-ie CPU, a na GPU trafiają tylko odczytane wier
 | `basal-serve`, bf16 (oficjalna ścieżka) | 15,9 GB | 14,4 s |
 | `kalambury.serve`, fp16 + per-layer embeddings na CPU | 10,3 GB | 8,1 s |
 
-Logity z tabelą na CPU i na GPU są identyczne (różnica 0,0), bo to zwykła kopia wierszy. Używam fp16 zamiast bf16, bo GPU
-M1/M2 nie liczy natywnie w bf16: matmul osiąga 1,9 TFLOPS w bf16 wobec 3,9 TFLOPS w fp16. Na 24 rysunkach kontrolnych
+Logity z tabelą na CPU i na GPU są identyczne (różnica 0,0), bo to zwykła kopia wierszy. Używam fp16 zamiast bf16, bo na
+tym M1 Pro matmul w bf16 działa o połowę wolniej: 1,9 TFLOPS wobec 3,9 TFLOPS w fp16. Na 24 rysunkach kontrolnych
 z `data/quickdraw_dev.jsonl` ta konfiguracja wybrała to samo hasło co bf16 w 24/24 przypadkach. Pewność różniła się
 najwyżej o 0,04.
 

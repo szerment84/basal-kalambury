@@ -136,7 +136,7 @@ the table stays in CPU RAM and only the rows that were read go to the GPU.
 | `kalambury.serve`, fp16 + per-layer embeddings on the CPU | 10.3 GB | 8.1 s |
 
 The logits with the table on the CPU and on the GPU are identical (a difference of 0.0), since it only copies rows. I
-use fp16 instead of bf16 because M1/M2 GPUs have no native bf16: a matmul runs at 1.9 TFLOPS in bf16 against
+use fp16 instead of bf16 because on this M1 Pro a bf16 matmul runs at half the speed: 1.9 TFLOPS against
 3.9 TFLOPS in fp16. On 24 control drawings from `data/quickdraw_dev.jsonl` this setup chose the same word as bf16 in
 24 of 24 cases, with confidence differing by at most 0.04.
 

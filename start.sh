@@ -8,7 +8,7 @@ PY=.venv/bin/python
 [ -x "$PY" ] || { echo "First run: python3 -m venv .venv && .venv/bin/pip install -r requirements.txt"; exit 1; }
 
 if [ "$(uname -sm)" = "Darwin arm64" ]; then
-  ENGINE=(--mode eager --device mps --dtype float16)  # M1/M2 GPUs have no native bf16; fp16 gives the same answers (README)
+  ENGINE=(--mode eager --device mps --dtype float16)  # bf16 runs at half speed on the M1; fp16 gives the same answers (README)
 else
   ENGINE=(--mode eager)
 fi
