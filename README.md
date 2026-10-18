@@ -65,6 +65,8 @@ W odpowiedzi przychodzi wybrane hasło, pewność i prawdopodobieństwa wszystki
 
 ## Uruchomienie
 
+![Gra w przeglądarce: rysunek czaszki i rozkład prawdopodobieństwa nad 255 hasłami](results/app.png)
+
 Potrzebujesz Pythona 3.11+ i ~16 GB pamięci na basal-omni-1.0-mini. Na Macu dzięki poprawce niżej to ~10 GB GPU i ~6 GB
 RAM. Wagi zajmują ~16 GB na dysku.
 
