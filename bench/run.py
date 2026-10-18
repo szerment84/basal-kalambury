@@ -1,4 +1,4 @@
-"""Puszcza rysunki z pliku JSONL przez basal-serve i zapisuje rozkłady prawdopodobieństwa. Można przerwać i wznowić.
+"""Runs the drawings of a JSONL file through basal-serve and saves the probability distributions. Can be resumed.
 
   python bench/run.py data/quickdraw_test.jsonl results/test.jsonl
 """
@@ -19,7 +19,7 @@ def main():
     ap.add_argument("--option-keys", default="hide", choices=["hide", "show"])
     ap.add_argument("--detail", default="default", choices=["default", "high"])
     ap.add_argument("--limit", type=int, default=None)
-    ap.add_argument("--tag", default="", help="dowolna etykieta zapisywana w wynikach (np. dtype serwera)")
+    ap.add_argument("--tag", default="", help="any label saved with the results (e.g. the server's dtype)")
     a = ap.parse_args()
 
     out = Path(a.out)

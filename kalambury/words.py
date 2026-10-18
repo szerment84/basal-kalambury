@@ -1,7 +1,13 @@
-"""Hasła gry: 345 kategorii Google Quick, Draw! z polskimi nazwami i losowo wybrane 255 z nich.
+"""Game words: the 345 Google Quick, Draw! categories with Polish names, plus an IT / nerd / Elon Musk pack.
 
-255 to limit opcji jednego pytania `choice` w basal (prompt format 2), więc tyle haseł model rozważa naraz,
-w jednym przebiegu. Wybór jest losowy (stały seed), a nie ręczny, żeby test nie faworyzował łatwych haseł.
+255 is the option limit of one basal `choice` question (prompt format 2), so every pack offers exactly 255 options
+and the model weighs all of them in one forward pass. The model is always asked in Polish (that is what the
+benchmark measured); English labels are only shown to people.
+
+- "quickdraw": 255 of the 345 categories, drawn at random (fixed seed) rather than by hand, so the benchmark does not
+  favour easy words.
+- "nerd": the NERD words below plus everyday Quick, Draw! words as distractors, including the obvious look-alikes
+  (a car next to the Cybertruck, a dog next to Doge).
 """
 import random
 
@@ -90,4 +96,88 @@ PL = {
 }
 
 SEED = 2026
-WORDS = sorted(random.Random(SEED).sample(sorted(PL), 255))  # klucze Quick, Draw! (angielskie)
+WORDS = sorted(random.Random(SEED).sample(sorted(PL), 255))  # Quick, Draw! keys (English names)
+
+# (key, Polish label the model reads, English label people see); keys must not clash with Quick, Draw! keys
+NERD = [
+    # Elon Musk
+    ("starship", "rakieta Starship (SpaceX)", "Starship rocket (SpaceX)"),
+    ("cybertruck", "Cybertruck (Tesla)", "Cybertruck (Tesla)"),
+    ("x_logo", "logo X (dawny Twitter)", "X logo (formerly Twitter)"),
+    ("twitter_bird", "ptaszek Twittera", "Twitter bird"),
+    ("doge", "pies Doge (Dogecoin)", "Doge (the Dogecoin dog)"),
+    ("mars", "Mars, czerwona planeta", "Mars, the red planet"),
+    ("starlink", "satelita Starlink", "Starlink satellite"),
+    ("neuralink", "chip Neuralink w mózgu", "Neuralink brain chip"),
+    ("flamethrower", "miotacz ognia (The Boring Company)", "flamethrower (The Boring Company)"),
+    ("optimus", "robot Optimus (Tesla)", "Optimus robot (Tesla)"),
+    ("tesla_logo", "logo Tesli", "Tesla logo"),
+    ("boring_tunnel", "tunel The Boring Company", "Boring Company tunnel"),
+    # IT and developers
+    ("rubber_duck", "gumowa kaczka do debugowania", "rubber duck for debugging"),
+    ("floppy", "dyskietka (ikona zapisu)", "floppy disk (the save icon)"),
+    ("tux", "pingwin Tux (Linux)", "Tux, the Linux penguin"),
+    ("wifi", "symbol Wi-Fi", "Wi-Fi symbol"),
+    ("terminal", "terminal z >_", "terminal with >_"),
+    ("cursor", "kursor myszy", "mouse pointer"),
+    ("code_bug", "robak, czyli bug w kodzie", "bug (the insect in your code)"),
+    ("qr_code", "kod QR", "QR code"),
+    ("error404", "błąd 404", "404 error"),
+    ("hashtag", "hashtag #", "hashtag #"),
+    ("at_sign", "znak @", "@ sign"),
+    ("apple_logo", "logo Apple", "Apple logo"),
+    ("android", "robot Androida", "Android robot"),
+    ("windows_logo", "logo Windows", "Windows logo"),
+    ("bitcoin", "bitcoin (BTC)", "Bitcoin (BTC)"),
+    ("usb_stick", "pendrive USB", "USB stick"),
+    ("server_rack", "szafa serwerowa", "server rack"),
+    ("gpu", "karta graficzna (GPU)", "graphics card (GPU)"),
+    ("chip", "procesor (chip)", "computer chip (CPU)"),
+    ("neural_net", "sieć neuronowa", "neural network"),
+    ("git_branches", "gałęzie w gicie", "git branches"),
+    # games, films and nerd culture
+    ("pacman", "Pac-Man", "Pac-Man"),
+    ("space_invader", "kosmita ze Space Invaders", "Space Invaders alien"),
+    ("tetris", "klocek z Tetrisa", "Tetris block"),
+    ("mario_mushroom", "grzybek z Super Mario", "Super Mario mushroom"),
+    ("creeper", "Creeper z Minecrafta", "Minecraft Creeper"),
+    ("among_us", "postać z Among Us", "Among Us crewmate"),
+    ("pokeball", "Pokéball", "Poké Ball"),
+    ("pikachu", "Pikachu", "Pikachu"),
+    ("gameboy", "Game Boy", "Game Boy"),
+    ("gamepad", "pad do konsoli", "game controller"),
+    ("rubik", "kostka Rubika", "Rubik's cube"),
+    ("d20", "kość k20 (D&D)", "D20 die (D&D)"),
+    ("triforce", "Triforce (Zelda)", "Triforce (Zelda)"),
+    ("lightsaber", "miecz świetlny", "lightsaber"),
+    ("vader", "hełm Dartha Vadera", "Darth Vader's helmet"),
+    ("death_star", "Gwiazda Śmierci", "Death Star"),
+    ("r2d2", "R2-D2", "R2-D2"),
+    ("tardis", "TARDIS (Doktor Who)", "TARDIS (Doctor Who)"),
+    ("batman", "logo Batmana", "Batman logo"),
+    ("superman", "logo Supermana", "Superman logo"),
+    ("potter_scar", "blizna Harry'ego Pottera", "Harry Potter's scar"),
+    ("atom", "atom", "atom"),
+    ("dna", "helisa DNA", "DNA double helix"),
+    ("pi", "liczba π", "pi (π)"),
+    ("vr_headset", "gogle VR", "VR headset"),
+    ("drone", "dron", "drone"),
+]
+# Quick, Draw! words that a nerd sketch is easily mistaken for: they are always among the "nerd" options
+CONFUSERS = [
+    "car", "pickup truck", "truck", "dog", "bird", "penguin", "duck", "brain", "rifle", "apple", "mushroom", "sword",
+    "moon", "circle", "square", "triangle", "line", "zigzag", "lightning", "monkey", "helicopter", "airplane",
+    "flying saucer", "laptop", "computer", "keyboard", "mouse", "cell phone", "television", "calculator",
+    "remote control", "camera", "spreadsheet", "envelope", "smiley face", "face", "star", "sun", "house", "key",
+    "door", "light bulb", "skull", "crown", "spider", "ant", "bee", "snake", "hat", "eyeglasses", "headphones",
+    "microphone", "power outlet", "hexagon", "octagon", "diamond", "donut", "cookie", "flashlight", "telephone",
+]
+
+LABELS = {k: {"pl": pl, "en": k} for k, pl in PL.items()} | {k: {"pl": pl, "en": en} for k, pl, en in NERD}
+_rest = sorted(set(PL) - set(CONFUSERS))
+NERD_OPTIONS = sorted([k for k, _, _ in NERD] + CONFUSERS
+                      + random.Random(SEED).sample(_rest, 255 - len(NERD) - len(CONFUSERS)))
+PACKS = {
+    "quickdraw": {"options": WORDS, "targets": WORDS},
+    "nerd": {"options": NERD_OPTIONS, "targets": [k for k, _, _ in NERD]},
+}

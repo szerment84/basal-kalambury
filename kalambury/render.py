@@ -1,13 +1,14 @@
-"""Kreski -> obraz, który dostaje model. Jedna funkcja dla gry, benchmarku i wideo, żeby model zawsze widział to samo.
+"""Strokes -> the image the model gets. One function for the game, the benchmark and the videos, so the model always
+sees the same thing.
 
-Kreski w formacie Quick, Draw!: [[xs, ys], ...]. Rysunek jest kadrowany do swojego obrysu, skalowany do kwadratu
-SIZE z marginesem MARGIN i rysowany czarną linią o grubości WIDTH na białym tle (z antyaliasingiem).
+Strokes in the Quick, Draw! format: [[xs, ys], ...]. The drawing is cropped to its bounding box, scaled into a SIZE
+square with a MARGIN and drawn as a black WIDTH-pixel line on white (antialiased).
 """
 import io
 
 from PIL import Image, ImageDraw
 
-SIZE, MARGIN, WIDTH, SS = 384, 32, 6, 3  # SS: nadpróbkowanie przy rysowaniu
+SIZE, MARGIN, WIDTH, SS = 384, 32, 6, 3  # SS: supersampling while drawing
 
 
 def render(strokes, size=SIZE):
@@ -23,7 +24,7 @@ def render(strokes, size=SIZE):
         pts = [((ox + (x - x0) * scale) * SS, (oy + (y - y0) * scale) * SS) for x, y in zip(s[0], s[1])]
         if len(pts) > 1:
             d.line(pts, fill=0, width=WIDTH * SS, joint="curve")
-        for px, py in (pts[0], pts[-1]):  # zaokrąglone końce kresek
+        for px, py in (pts[0], pts[-1]):  # round stroke ends
             d.ellipse((px - r, py - r, px + r, py + r), fill=0)
     return big.resize((size, size), Image.LANCZOS).convert("RGB")
 

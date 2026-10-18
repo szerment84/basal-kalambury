@@ -1,6 +1,6 @@
-"""basal kalambury: gra w przeglądarce. Serwuje frontend i przekazuje kreski do basal-serve.
+"""basal kalambury: the browser game. Serves the frontend and passes the strokes on to basal-serve.
 
-  python -m kalambury.server          # http://127.0.0.1:7860, basal-serve pod BASAL_URL (domyślnie :8000)
+  python -m kalambury.server          # http://127.0.0.1:7860, basal-serve at BASAL_URL (default :8000)
 """
 import argparse
 import base64
@@ -9,12 +9,17 @@ import time
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 from . import basal_client
 from .render import png
-from .words import PL, WORDS
+from .words import LABELS, PACKS
 
 STATIC = Path(__file__).parent / "static"
+
+
+def word(k):
+    return {"key": k, "pl": LABELS[k]["pl"], "en": LABELS[k]["en"]}
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -27,28 +32,36 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        if self.path != "/api/words":
+        url = urlparse(self.path)
+        if url.path != "/api/words":
             return super().do_GET()
+        pack = parse_qs(url.query).get("pack", ["quickdraw"])[0]
+        if pack not in PACKS:
+            return self.send_json({"error": f"unknown pack: {pack}"}, 400)
         try:
             model = basal_client.model_name()
         except OSError:
             model = None
-        self.send_json({"model": model, "words": [{"key": k, "pl": PL[k]} for k in WORDS]})
+        self.send_json({"model": model, "pack": pack, "words": [word(k) for k in PACKS[pack]["options"]],
+                        "targets": PACKS[pack]["targets"]})
 
     def do_POST(self):
         if self.path != "/api/guess":
             return self.send_error(404)
-        strokes = json.loads(self.rfile.read(int(self.headers["content-length"]))).get("strokes")
+        body = json.loads(self.rfile.read(int(self.headers["content-length"])))
+        strokes, pack = body.get("strokes"), body.get("pack", "quickdraw")
         if not strokes:
-            return self.send_json({"error": "pusty rysunek"}, 400)
+            return self.send_json({"error": "empty drawing"}, 400)
+        if pack not in PACKS:
+            return self.send_json({"error": f"unknown pack: {pack}"}, 400)
         t = time.time()
         try:
-            ans, usage = basal_client.guess(strokes)
+            ans, usage = basal_client.guess(strokes, pack=pack)
         except OSError as e:
-            return self.send_json({"error": f"basal-serve nie odpowiada pod {basal_client.BASAL_URL}: {e}"}, 502)
+            return self.send_json({"error": f"basal-serve is not answering at {basal_client.BASAL_URL}: {e}"}, 502)
         ranking = sorted(ans["probabilities"].items(), key=lambda kv: -kv[1])
         self.send_json({"choice": ans["choice"], "confidence": ans["confidence"],
-                        "ranking": [{"key": k, "pl": PL[k], "p": p} for k, p in ranking],
+                        "ranking": [{**word(k), "p": p} for k, p in ranking],
                         "usage": usage, "wall_ms": round((time.time() - t) * 1000),
                         "image": "data:image/png;base64," + base64.b64encode(png(strokes)).decode()})
 

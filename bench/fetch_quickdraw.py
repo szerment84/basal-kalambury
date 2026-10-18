@@ -1,9 +1,9 @@
-"""Pobiera losowe rysunki z Google Quick, Draw! (simplified ndjson, CC BY 4.0) dla 255 haseł gry.
+"""Downloads random Google Quick, Draw! drawings (simplified ndjson, CC BY 4.0) for the game's 255 words.
 
-Plik każdej kategorii ma kilkadziesiąt MB, więc skrypt czyta tylko kilka losowych fragmentów (HTTP Range) i bierze
-z nich pełne linie z recognized=true. Wynik:
-  data/quickdraw_dev.jsonl   1 rysunek na hasło: do strojenia promptu, nie wchodzi do raportu
-  data/quickdraw_test.jsonl  --per-word rysunków na hasło: zbiór testowy
+Each category file is tens of MB, so the script reads only a few random chunks (HTTP Range) and keeps the complete
+lines with recognized=true. Output:
+  data/quickdraw_dev.jsonl   1 drawing per word: for engine checks, not part of the report
+  data/quickdraw_test.jsonl  --per-word drawings per word: the test set
 """
 import argparse
 import json
@@ -41,7 +41,7 @@ def fetch(word, chunks):
     out = []
     for start in sorted(rng.sample(range(size - CHUNK), chunks)):
         req = urllib.request.Request(url, headers={"Range": f"bytes={start}-{start + CHUNK - 1}"})
-        lines = get(req)[1].decode("utf-8", "replace").split("\n")[1:-1]  # pierwsza i ostatnia linia są ucięte
+        lines = get(req)[1].decode("utf-8", "replace").split("\n")[1:-1]  # the first and last lines are cut
         out += [json.loads(line) for line in lines]
     seen, rows = set(), []
     for d in out:
@@ -55,20 +55,20 @@ def fetch(word, chunks):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--per-word", type=int, default=4, help="rysunków testowych na hasło")
-    ap.add_argument("--chunks", type=int, default=3, help="losowych fragmentów pliku na hasło")
+    ap.add_argument("--per-word", type=int, default=4, help="test drawings per word")
+    ap.add_argument("--chunks", type=int, default=3, help="random file chunks per word")
     a = ap.parse_args()
     with ThreadPoolExecutor(8) as ex:
         got = dict(zip(WORDS, ex.map(lambda w: fetch(w, a.chunks), WORDS)))
     (ROOT / "data").mkdir(exist_ok=True)
     for w in WORDS:
         if len(got[w]) < 1 + a.per_word:
-            raise SystemExit(f"{w}: tylko {len(got[w])} rysunków, zwiększ --chunks")
+            raise SystemExit(f"{w}: only {len(got[w])} drawings, raise --chunks")
     with open(ROOT / "data/quickdraw_dev.jsonl", "w") as dev:
         dev.writelines(json.dumps(got[w][0]) + "\n" for w in WORDS)
-    with open(ROOT / "data/quickdraw_test.jsonl", "w") as test:  # po kolei: 1. rysunek każdego hasła, potem 2. ...
+    with open(ROOT / "data/quickdraw_test.jsonl", "w") as test:  # in turn: every word's 1st drawing, then 2nd, ...
         test.writelines(json.dumps(got[w][j]) + "\n" for j in range(1, 1 + a.per_word) for w in WORDS)
-    print(f"{len(WORDS)} haseł: dev {len(WORDS)}, test {len(WORDS) * a.per_word} rysunków")
+    print(f"{len(WORDS)} words: dev {len(WORDS)}, test {len(WORDS) * a.per_word} drawings")
 
 
 if __name__ == "__main__":

@@ -1,22 +1,25 @@
-"""Zapytanie do basal-serve: obraz rysunku + jedno pytanie `choice` z 255 hasłami, bez generowania tekstu."""
+"""A basal-serve request: the drawing as an image + one `choice` question over 255 words, no text generated."""
 import base64
 import json
 import os
 import urllib.request
 
 from .render import png
-from .words import PL, WORDS
+from .words import LABELS, PACKS
 
 BASAL_URL = os.environ.get("BASAL_URL", "http://127.0.0.1:8000")
+# the model is asked in Polish, as in the benchmark: "A hand-drawn sketch made with a mouse in a game of charades:
+# black lines on a white background." / "What does this drawing show?"
 STATE = "Odręczny szkic narysowany myszką w grze w kalambury: czarne kreski na białym tle."
 QUESTION = "Co przedstawia ten rysunek?"
 
 
-def request_body(strokes, option_keys="hide", detail="default"):
+def request_body(strokes, pack="quickdraw", option_keys="hide", detail="default"):
     return {
         "state": STATE,
         "questions": {"haslo": {"type": "choice", "instructions": QUESTION,
-                                "criteria": {k: PL[k] for k in WORDS}, "option_keys": option_keys}},
+                                "criteria": {k: LABELS[k]["pl"] for k in PACKS[pack]["options"]},
+                                "option_keys": option_keys}},
         "media": [{"type": "image", "data": base64.b64encode(png(strokes)).decode()}],
         "detail": detail,
         "lang": "pl",
@@ -24,7 +27,7 @@ def request_body(strokes, option_keys="hide", detail="default"):
 
 
 def guess(strokes, **kw):
-    """-> (odpowiedź na pytanie "haslo", usage) z basal-serve."""
+    """-> (the answer to the "haslo" question, usage) from basal-serve."""
     req = urllib.request.Request(BASAL_URL + "/v1/systemone", data=json.dumps(request_body(strokes, **kw)).encode(),
                                  headers={"content-type": "application/json"})
     with urllib.request.urlopen(req, timeout=600) as r:
