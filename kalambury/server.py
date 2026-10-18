@@ -4,6 +4,7 @@
 """
 import argparse
 import base64
+import importlib.metadata
 import json
 import time
 from functools import partial
@@ -16,13 +17,34 @@ from .render import png
 from .words import LABELS, PACKS
 
 STATIC = Path(__file__).parent / "static"
+# parameter counts of the basal-omni models, from the basal README (/v1/models does not report them)
+PARAMS = {"basal-omni-1.0-mini": "4B", "basal-omni-1.0-max": "12B", "basal-omni-1.1-max": "12B",
+          "basal-omni-1.0-ultra": "31B", "basal-omni-1.0-ultra-FP8": "31B"}
+try:
+    ENGINE = "basal " + importlib.metadata.version("basal")
+except importlib.metadata.PackageNotFoundError:
+    ENGINE = None
 
 
 def word(k):
     return {"key": k, "pl": LABELS[k]["pl"], "en": LABELS[k]["en"]}
 
 
+def model():
+    """The exact model basal-serve is serving, or None when it is down."""
+    try:
+        info = basal_client.model_info()
+    except OSError:
+        return None
+    return {"name": info["name"], "params": PARAMS.get(info["name"]), "released": info.get("release_date"),
+            "mode": info.get("mode"), "engine": ENGINE}
+
+
 class Handler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header("Cache-Control", "no-cache")  # revalidate every time, so an update reaches the browser
+        super().end_headers()
+
     def send_json(self, obj, status=200):
         body = json.dumps(obj, ensure_ascii=False).encode()
         self.send_response(status)
@@ -38,11 +60,7 @@ class Handler(SimpleHTTPRequestHandler):
         pack = parse_qs(url.query).get("pack", ["quickdraw"])[0]
         if pack not in PACKS:
             return self.send_json({"error": f"unknown pack: {pack}"}, 400)
-        try:
-            model = basal_client.model_name()
-        except OSError:
-            model = None
-        self.send_json({"model": model, "pack": pack, "words": [word(k) for k in PACKS[pack]["options"]],
+        self.send_json({"model": model(), "pack": pack, "words": [word(k) for k in PACKS[pack]["options"]],
                         "targets": PACKS[pack]["targets"]})
 
     def do_POST(self):

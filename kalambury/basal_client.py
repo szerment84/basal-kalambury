@@ -35,6 +35,11 @@ def guess(strokes, **kw):
     return out["answers"]["haslo"], out["usage"]
 
 
-def model_name():
+def model_info():
+    """basal-serve's description of the served model (name, release_date, mode, ...)."""
     with urllib.request.urlopen(BASAL_URL + "/v1/models", timeout=10) as r:
-        return json.load(r)["models"][0]["name"]
+        return json.load(r)["models"][0]
+
+
+def model_name():
+    return model_info()["name"]

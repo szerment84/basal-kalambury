@@ -30,6 +30,8 @@ const T = {
     win: (w, p, n, s) => `✓ basal zgadł: <b>${w}</b>, pewność ${p} (${n} ${plural(n, "kreska", "kreski", "kresek")}, ${s} s). <kbd>N</kbd> następne hasło`,
     lose: (w) => `Czas minął. basal stawiał na: <b>${w}</b>. <kbd>N</kbd> następne hasło`, nothing: "nic",
     score: (ok, all) => `Wynik: ${ok}/${all}`, down: "● basal-serve nie działa",
+    info: (m) => [m.engine && `silnik ${m.engine}`, m.mode && `tryb ${m.mode}`, m.released && `model z ${m.released}`]
+      .filter(Boolean).join(" · "),
     list_quickdraw: (n) => `Lista ${n} haseł`,
     list_nerd: (n, rest) => `${n} haseł z paczki „IT i nerdy” (plus ${rest} zwykłych haseł z Quick, Draw! jako pułapki)`,
     footer: 'Rysunki do benchmarku: Google <a href="https://quickdraw.withgoogle.com/data">Quick, Draw!</a> (CC BY 4.0) · model i silnik: <a href="https://github.com/rkinas/basal">basal</a> (Apache-2.0) · skróty: <kbd>Z</kbd> cofnij, <kbd>C</kbd> wyczyść, <kbd>N</kbd> nowe hasło',
@@ -46,6 +48,8 @@ const T = {
     win: (w, p, n, s) => `✓ basal got it: <b>${w}</b>, ${p} sure (${n} ${plural(n, "stroke", "strokes", "strokes")}, ${s} s). <kbd>N</kbd> next word`,
     lose: (w) => `Time's up. basal's best guess: <b>${w}</b>. <kbd>N</kbd> next word`, nothing: "nothing",
     score: (ok, all) => `Score: ${ok}/${all}`, down: "● basal-serve is down",
+    info: (m) => [m.engine && `${m.engine} engine`, m.mode && `${m.mode} mode`, m.released && `released ${m.released}`]
+      .filter(Boolean).join(" · "),
     list_quickdraw: (n) => `All ${n} words`,
     list_nerd: (n, rest) => `The ${n} IT & nerd words (plus ${rest} everyday Quick, Draw! words as decoys)`,
     footer: 'Benchmark drawings: Google <a href="https://quickdraw.withgoogle.com/data">Quick, Draw!</a> (CC BY 4.0) · model and engine: <a href="https://github.com/rkinas/basal">basal</a> (Apache-2.0), asked in Polish · keys: <kbd>Z</kbd> undo, <kbd>C</kbd> clear, <kbd>N</kbd> new word',
@@ -290,8 +294,15 @@ window.addEventListener("resize", fit);
   $("wordsum").textContent = pack === "nerd" ? T.list_nerd(targets.length, words.length - targets.length)
                                              : T.list_quickdraw(targets.length);
   $("wordlist").textContent = targets.map((k) => byKey[k]).sort((a, b) => a.localeCompare(b, lang)).join(", ");
-  const m = $("model");
-  m.textContent = r.model ? `● ${r.model}` : T.down;
-  m.className = "badge " + (r.model ? "ok" : "off");
+  const m = $("model"), info = r.model;
+  if (info) {  // the exact model: its Hugging Face id, size, engine version, mode and release date
+    const id = `Remek/${info.name}`;
+    m.innerHTML = `● <a href="https://huggingface.co/${esc(id)}" target="_blank" rel="noopener">${esc(id)}</a>`
+      + (info.params ? ` · ${esc(info.params)}` : "");
+    $("modelinfo").textContent = T.info(info);
+  } else {
+    m.textContent = T.down;
+  }
+  m.className = "badge " + (info ? "ok" : "off");
   newRound();
 })();
